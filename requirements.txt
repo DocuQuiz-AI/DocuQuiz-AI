@@ -1,0 +1,16 @@
+easyocr
+pytesseract 
+tox
+fpdf2
+Pillow
+langchain
+openai
+python-dotenv
+langchain-community
+python-dotenv
+openai
+tiktoken
+faiss-cpu
+pypdf
+langchain-openai
+langchain-cli
