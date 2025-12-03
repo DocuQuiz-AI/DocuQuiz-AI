@@ -3,3 +3,4 @@ import os
 
 load_dotenv()
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+api_key_ = os.getenv("OPENAI_API_KEY")

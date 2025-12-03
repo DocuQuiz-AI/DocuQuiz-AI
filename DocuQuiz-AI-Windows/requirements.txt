@@ -3,6 +3,9 @@ pytesseract
 tox
 fpdf2
 Pillow
+opencv-python
+google-cloud-vision
+google-auth
 langchain
 openai
 python-dotenv

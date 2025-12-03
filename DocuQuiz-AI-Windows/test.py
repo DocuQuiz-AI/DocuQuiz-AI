@@ -1,17 +1,27 @@
+# from openai import OpenAI
+# from config import *
+
+# client = OpenAI(api_key=api_key_)
+
+# prompt = """
+# Output a Blooket CSV for 10 math questions.
+# Columns: Question #,Question Text,Answer 1,Answer 2,Answer 3 (Optional),Answer 4 (Optional),Time Limit (sec),Correct Answer(s)
+# Time Limit: 20
+# Output ONLY CSV rows, no explanations or code blocks.
+# """
+
+# response = client.chat.completions.create(
+#     model="gpt-4",
+#     messages=[{"role": "user", "content": prompt}]
+# )
+
+# csv_text = response.choices[0].message.content
+
+# with open("blooket_quiz.csv", "w", encoding="utf-8") as f:
+#     f.write(csv_text)
+
+
 from PIL import Image
-from fpdf import FPDF
-import pytesseract
 
-# If you don't have tesseract executable in your PATH, include the following:
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-# Example tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract'
-path = r"images\test.png"
-# Simple image to string
-text = pytesseract.image_to_string(Image.open(path))
-
-
-pdf = FPDF()
-pdf.add_page()
-pdf.set_font("Arial", size=12)
-pdf.multi_cell(0, 10, text)
-pdf.output("data_sets\document.pdf")
+img = Image.open("logo\docuquiz_logo.png").convert("RGB")
+img.save("output.pdf")

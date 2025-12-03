@@ -11,11 +11,12 @@ from config import *
 
 
 class Chatbot:
-    def __init__(self, pdf_files:list, reset_vectorstore:bool, token_count:int):
+    def __init__(self, pdf_files:list, reset_vectorstore:bool, token_count:int, pdf_or_not:str):
         self.pdf_files = pdf_files
         self.reset_vectorstore = reset_vectorstore
         self.token_count = token_count
         self.is_initialized = False
+        self.pdf_or_not = pdf_or_not
 
     def initialize(self):
         if not self.is_initialized:
@@ -71,61 +72,132 @@ class Chatbot:
     def _build_qa(self, persisted_vectorstore, token_count):
         # Define a custom prompt template
         from langchain_core.prompts import PromptTemplate
+        if self.pdf_or_not == 'pdf':
+            prompt_template = """
+            You are an intelligent and helpful AI assistant for making a quiz.
+            Make sure to make a quiz set based on the context provided.
+            If there is not enough information to generate all 10 questions, generate fewer questions instead.
+            Make sure the questions and answers are based ONLY on the context provided.
+            Please provide the quiz in 10 questions or more or less depending on the context.
+            Make sure questions and answers are relevant to the context and make sense.
+            Make sure the questions and answers have good grammar and punctuation.
+            Make sure the questions and answers are not too long or too short.
+            Make sure the questions and answers are not too complex or too simple.
+            Make sure the questions and answers are not too vague or too specific.
+            Make sure the questions and answers are not too easy or too hard.
+            Make sure the questions and answers are not too repetitive.
+            Make sure the questions and answers are not too boring or too interesting.
+            Make sure the questions and answers are not too long or too short.
+            ONLY use information from the context below. Do NOT add anything not in the context. 
+            If there is not enough information to generate all 10 questions, generate fewer questions instead.
+            State every question and options only once, do not repeat the same question or/and responses.
+            Each question should have 4 options (a, b, c, d) and indicate the correct answer.
+            Make it in this format:
+            1. Question
 
-        prompt_template = """
-        You are an intelligent and helpful AI assistant for making a quiz.
-        Make sure to make a quiz set based on the context provided.
-        Please provide the quiz in 10 questions.
-        ONLY use information from the context below. Do NOT add anything not in the context. 
-        If there is not enough information to generate all 10 questions, generate fewer questions instead.
-        State every question and options only once, do not repeat the same question or/and responses.
-        Each question should have 4 options (a, b, c, d) and indicate the correct answer.
-        Make it in this format:
-        1. Question
+            a) Option A
+            b) Option B
+            c) Option C
+            d) Option D
 
-        a) Option A
-        b) Option B
-        c) Option C
-        d) Option D
+            Make sure the answer key is provided after all the questions and options are listed that you are creating in this format:
+            Make sure you provide the correct answer after the options like this form:
+            Question #1 Answer: A/B/C/D
 
-        Make sure the answer key is provided after all the questions and options are listed that you are creating in this format:
-        Make sure you provide the correct answer after the options like this form:
-        Question #1 Answer: A/B/C/D
-
-        ONLY use information from the context below. Do NOT add anything not in the context. 
-        If there is not enough information to generate all 10 questions, generate fewer questions instead.
+            ONLY use information from the context below. Do NOT add anything not in the context. 
+            If there is not enough information to generate all 10 questions, generate fewer questions instead.
 
 
-        If there is mutliple answers, list them separated by commas like this:
-        Question #2 Answer: A,C
+            If there is mutliple answers, list them separated by commas like this:
+            Question #2 Answer: A,C
 
-        Context:
-        {context}
+            Context:
+            {context}
 
-        Question:
-        {question}
+            Question:
+            {question}
 
-        Helpful answer in markdown:
-        """
+            Helpful answer in markdown:
+            """
+        else:
+            prompt_template = """
+            You are an intelligent and helpful AI assistant for making a quiz.
+            Make sure to make a quiz set based on the context provided.
+            Make sure the questions and answers are based ONLY on the context provided.
+            If there is not enough information to generate all 10 questions, generate fewer questions instead.
+            Please provide the quiz in 10 questions or more or less depending on the context.
+            Make sure questions and answers are relevant to the context and make sense.
+            Make sure the questions and answers have good grammar and punctuation.
+            Make sure the questions and answers are not too long or too short.
+            Make sure the questions and answers are not too complex or too simple.
+            Make sure the questions and answers are not too vague or too specific.
+            Make sure the questions and answers are not too easy or too hard.
+            Make sure the questions and answers are not too repetitive.
+            Make sure the questions and answers are not too boring or too interesting.
+            Make sure the questions and answers are not too long or too short.
+            ONLY use information from the context below. Do not add anything or make up information not in the context. 
+            If there is not enough information to generate all 10 questions, generate fewer questions instead.
+            State every question and options only once, do not repeat the same question or/and responses.
+            Each question should have 4 options (a, b, c, d) and indicate the correct answer.
+            Make it in this format:
+            
+
+            Generate a Blooket-compatible CSV. Follow these rules exactly:
+
+            Output only the raw CSV (no code blocks, no markdown, no explanations).
+
+            NO SPACES after commas.
+
+            Use exactly 8 columns in this order:
+            Question #,Question Text,Answer 1,Answer 2,Answer 3,Answer 4,Time Limit (sec),Correct Answer(s)
+
+            All text fields must be in quotes.
+
+            Time Limit is always 20.
+
+            Provide exactly 4 answer choices for every question.
+
+            Correct Answer(s) must be a number 1–4.
+
+            Do NOT create blank fields.
+
+            Do NOT add any extra commas or extra columns.
+
+            Do NOT add commentary before or after the CSV.
+
+            Now generate the CSV using these questions:
+
+            (INSERT YOUR QUESTIONS HERE)
+
+            Context:
+            {context}
+
+            Question:
+            {question}
+
+            Helpful answer in markdown:
+            """
 
         prompt = PromptTemplate.from_template(prompt_template)
 
         # Rough approximation: 1 token ≈ 4 chars
         
         print(f"Token count for context: {token_count}")
-        # Use default model if token_count is None
-        if token_count is None or token_count <= 8192:  # ≤ mini 4o context, 8192 tokens
-            model_use = "gpt-4o-mini"
-            print("Using gpt-4o-mini model")
-        elif token_count >= 16384:  # ≤ gpt-3.5-turbo / gpt-5-mini context, 16384 tokens
-            model_use = "gpt-5-mini"
-            print("Using gpt-5-mini model")
-        elif token_count >= 32768:  # ≤ gpt-4o / gpt-5 context, 32768 tokens
-            model_use = "gpt-5"
-            print("Using gpt-5 model")
-        else:
-            model_use = "truncate or split context"
         
+        # Model selection based on token count
+        # Both gpt-4o-mini and gpt-4o have 128k context windows
+        # gpt-4o-mini is cheaper, gpt-4o is higher quality
+        
+        if token_count is None or token_count <= 200:  # Up to 100k tokens - use cheaper model
+            model_use = "gpt-4o-mini"  # 128k context, cost-effective
+            print("Using gpt-4o-mini model (128k context)")
+        elif token_count <= 600:  # 100k-128k tokens - use higher quality model
+            model_use = "gpt-5-mini"  # 128k context, better quality for complex documents
+            print("Using gpt-5-mini model (128k context)")
+        elif token_count <= 1000:  # Over 128k - need to split or truncate
+            model_use = "gpt-5.1"  # Use best model, but document will be truncated
+            print(f"Warning: Document has {token_count} tokens, exceeding 1000 tokens limit.")
+            print("Using gpt-5 model (document will be truncated to fit)")
         # Create the chain
         llm = ChatOpenAI(
             model=model_use,  # More cost-effective model

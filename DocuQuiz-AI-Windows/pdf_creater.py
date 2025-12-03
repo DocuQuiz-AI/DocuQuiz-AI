@@ -5,6 +5,11 @@ from PIL import Image
 FONTS_REGISTERED = False
 
 
+def convert_pics_to_pdf(path, output_pdf_path):
+    img = Image.open(path).convert("RGB")
+    img.save(output_pdf_path)
+    return "Successfully created PDF from image."
+
 class CustomPDF(FPDF):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -53,6 +58,7 @@ class PDFCreator:
         self.output_pdf_path = output_pdf_path
         self.logo_path = logo_path  # Path to your logo image
         self.text = text
+    
 
     def create_pdf_with_unicode_text(self):
         pdf = CustomPDF()
